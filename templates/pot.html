@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Current Pot{% endblock %}
+
+{% block content %}
+<h1>Current Pot</h1>
+
+{% if not season %}
+  <p>No season found yet.</p>
+{% else %}
+
+  <div style="margin-bottom:12px">
+    <label for="season-select">Season:</label>
+    <select id="season-select" onchange="if (this.value) window.location.href=this.value;">
+      {% for s in seasons %}
+        <option value="{% url 'current_pot' s.id %}" {% if s.id == season.id %}selected{% endif %}>
+          Season {{ s.year }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <table border="1" cellpadding="8" cellspacing="0">
+    <tbody>
+      <tr>
+        <th style="text-align:left">Season</th>
+        <td>Season {{ season.year }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Buy-in (per user)</th>
+        <td>${{ buy_in|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Users counted</th>
+        <td>{{ user_count }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Buy-in subtotal</th>
+        <td>${{ buyin_total|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Loss fee (per loss)</th>
+        <td>${{ loss_fee|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Losses so far</th>
+        <td>{{ losses_count }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left">Losses subtotal</th>
+        <td>${{ losses_total|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left"><strong>Current Pot</strong></th>
+        <td><strong>${{ pot_total|floatformat:2 }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:8px; color:#666">
+    Players with picks this season: {{ players_this_season }} (for reference)
+  </p>
+
+{% endif %}
+{% endblock %}

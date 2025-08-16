@@ -16,4 +16,7 @@ urlpatterns = [
 
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
+    path("pot/", views.current_pot, name="current_pot_latest"),
+    path("pot/<int:season_id>/", views.current_pot, name="current_pot"),
+    path("admin/", admin.site.urls),
 ]

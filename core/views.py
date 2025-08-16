@@ -11,6 +11,13 @@ from django.db import transaction
 from .models import Profile
 
 from decimal import Decimal
+from django.contrib.auth import get_user_model
+from django.db.models import F
+from django.shortcuts import get_object_or_404, render
+
+from .models import Season, Pick
+
+from decimal import Decimal
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Prefetch
 from django.shortcuts import render, get_object_or_404
@@ -209,3 +216,58 @@ def weekly_dues(request, week_id=None):
         "total": total,
         "loss_fee": LOSS_FEE,
     })
+
+LOSS_FEE = Decimal("2.00")  # same loss fee you use elsewhere
+
+def current_pot(request, season_id=None):
+    """Public page: shows current pot for a season."""
+    season = (
+        Season.objects.order_by("-year").first()
+        if season_id is None
+        else get_object_or_404(Season, pk=season_id)
+    )
+    if not season:
+        return render(request, "public/pot.html", {"season": None})
+
+    User = get_user_model()
+
+    # Count users — all active users by default
+    user_count = User.objects.filter(is_active=True).count()
+
+    # Total losses (only games that have a result, and selection != winner)
+    losses_qs = (
+        Pick.objects
+            .filter(game__week__season=season, game__gameresult__isnull=False)
+            .exclude(game__gameresult__winner=F("selection"))
+    )
+    losses_count = losses_qs.count()
+    losses_total = LOSS_FEE * losses_count
+
+    # Buy-in part
+    buyin_total = season.buy_in * user_count  # assumes Decimal dollars
+
+    pot_total = buyin_total + losses_total
+
+    # Optional: also show how many players actually picked in the season
+    players_this_season = (
+        User.objects.filter(pick__game__week__season=season).distinct().count()
+    )
+
+    seasons = Season.objects.order_by("-year")  # for a simple dropdown
+
+    return render(
+        request,
+        "public/pot.html",
+        {
+            "season": season,
+            "seasons": seasons,
+            "user_count": user_count,
+            "players_this_season": players_this_season,
+            "buy_in": season.buy_in,
+            "loss_fee": LOSS_FEE,
+            "losses_count": losses_count,
+            "losses_total": losses_total,
+            "buyin_total": buyin_total,
+            "pot_total": pot_total,
+        },
+    )
