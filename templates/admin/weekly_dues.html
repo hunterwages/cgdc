@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Weekly Dues{% endblock %}
+
+{% block content %}
+<h1>Weekly Dues</h1>
+
+{% if message %}
+  <p>{{ message }}</p>
+{% endif %}
+
+{% if weeks %}
+  <form method="get" action="{% url 'weekly_dues' week.id %}">
+    <label for="week-select">Week:</label>
+    <select id="week-select" name="week" onchange="if (this.value) window.location.href=this.value;">
+      {% for w in weeks %}
+        <option value="{% url 'weekly_dues' w.id %}" {% if w.id == week.id %}selected{% endif %}>
+          Season {{ w.season.year }} — Week {{ w.number }}
+        </option>
+      {% endfor %}
+    </select>
+    <a href="?format=csv">Export CSV</a>
+  </form>
+
+  <p>Loss fee: ${{ loss_fee }} per loss</p>
+
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Venmo</th>
+        <th>Losses</th>
+        <th>Amount owed</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.username }}</td>
+          <td>{{ r.venmo }}</td>
+          <td style="text-align:center">{{ r.losses }}</td>
+          <td>${{ r.amount|floatformat:2 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">No picks for this week.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" style="text-align:right"><strong>Total:</strong></td>
+        <td><strong>${{ total|floatformat:2 }}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+{% endif %}
+{% endblock %}
