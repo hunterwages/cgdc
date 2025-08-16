@@ -18,20 +18,18 @@ class PickForm(forms.ModelForm):
 VENMO_RE = re.compile(r"^[A-Za-z0-9_.-]{3,30}$")
 
 class SignupForm(UserCreationForm):
-    venmo_handle = forms.CharField(
-        max_length=30,
-        required=False,
-        help_text="Your Venmo (no @). Letters, numbers, . _ - only."
-    )
+    first_name = forms.CharField(max_length=30, required=True)
+    last_name = forms.CharField(max_length=30, required=True)
+    venmo_handle = forms.CharField(max_length=50, required=False)
 
-    class Meta(UserCreationForm.Meta):
+    class Meta:
         model = User
-        fields = ("username", "venmo_handle")
+        fields = ('username', 'first_name', 'last_name', 'venmo_handle', 'password1', 'password2')
 
-    def clean_venmo_handle(self):
-        val = (self.cleaned_data.get("venmo_handle") or "").strip()
-        if val.startswith("@"):
-            val = val[1:]
-        if val and not VENMO_RE.match(val):
-            raise forms.ValidationError("Use letters, numbers, dots, underscores, or dashes (3–30 chars).")
-        return val
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        if commit:
+            user.save()
+        return user

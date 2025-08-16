@@ -1,8 +1,10 @@
-{% extends 'base.html' %}
-{% block content %}
-<h3>Sign up</h3>
-<form method="post">{% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Create account</button>
+<form method="post">
+  {% csrf_token %}
+  {{ form.username.label_tag }} {{ form.username }}
+  {{ form.first_name.label_tag }} {{ form.first_name }}
+  {{ form.last_name.label_tag }} {{ form.last_name }}
+  {{ form.venmo_handle.label_tag }} {{ form.venmo_handle }}
+  {{ form.password1.label_tag }} {{ form.password1 }}
+  {{ form.password2.label_tag }} {{ form.password2 }}
+  <button type="submit">Sign up</button>
 </form>
-{% endblock %}

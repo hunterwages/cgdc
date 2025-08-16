@@ -20,12 +20,12 @@ def ensure_profile(sender, instance, created, **kwargs):
     Profile.objects.get_or_create(user=instance)
 
 # Auto-create a Profile for each new user
-@receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-    else:
-        instance.profile.save()
+# @receiver(post_save, sender=User)
+# def create_or_update_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         Profile.objects.create(user=instance)
+#     else:
+#         instance.profile.save()
 
 class Season(models.Model):
     year = models.PositiveIntegerField(unique=True)
