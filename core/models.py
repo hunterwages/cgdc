@@ -7,17 +7,17 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-@receiver(post_save, sender=User)
-def ensure_profile(sender, instance, created, **kwargs):
-    # Safe: won’t blow up if a row already exists (even an orphan)
-    Profile.objects.get_or_create(user=instance)
-
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     venmo_handle = models.CharField(max_length=30, blank=True, help_text="Venmo username without @")
 
     def __str__(self):
         return f"Profile({self.user.username})"
+    
+@receiver(post_save, sender=User)
+def ensure_profile(sender, instance, created, **kwargs):
+    # Safe if already exists; won’t double-insert
+    Profile.objects.get_or_create(user=instance)
 
 # Auto-create a Profile for each new user
 @receiver(post_save, sender=User)

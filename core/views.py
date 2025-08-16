@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db.models import Case, When, IntegerField, F
 from django.db.models import Q, Sum, Case, When, IntegerField, F
+from django.db import transaction
+from .models import Profile
 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
@@ -105,23 +107,20 @@ def standings(request):
 
 # Simple signup view
 
+@transaction.atomic
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            user = form.save()  # creates the User (signal runs here)
-
-            # after user = form.save()
-            Profile.objects.update_or_create(
-                user=user,
-                defaults={"venmo_handle": form.cleaned_data.get("venmo_handle", "").lstrip("@")}
-            )
+            user = form.save()  # signal runs here; profile will exist (or be created)
             venmo = form.cleaned_data.get('venmo_handle', '').lstrip('@')
-            # set venmo safely without creating a duplicate profile:
+
+            # Idempotent: update if exists, create if missing
             Profile.objects.update_or_create(
                 user=user,
-                defaults={"venmo_handle": venmo}
+                defaults={"venmo_handle": venmo},
             )
+
             login(request, user)
             return redirect('home')
     else:
