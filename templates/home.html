@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Season {{ season.year }} — Week {{ week.week_number }}</h2>
+<p>Picks lock at {{ week.lock_at }}.</p>
+
+{% for g in games %}
+  <div class="card">
+    <small>{{ g.get_kind_display }}</small>
+    <h3>{{ g.away_team }} @ {{ g.home_team }}</h3>
+    <p>Kickoff: {{ g.kickoff_at }}</p>
+    {% if g.is_locked %}
+    <em>Locked</em>
+    {% else %}
+    <div data-kickoff="{{ g.kickoff_at|date:'c' }}" class="countdown" style="font-size:12px; color:#666;"></div>
+    {% if request.user.is_authenticated %}
+        {% if g.user_pick %}
+        <p>Your pick: <strong>{{ g.user_pick.get_selection_display }}</strong></p>
+        {% endif %}
+        <a role="button" href="/pick/{{ g.id }}/">Make / Update Pick</a>
+    {% else %}
+        <a role="button" href="/accounts/login/">Login to pick</a>
+    {% endif %}
+    {% endif %}
+
+  </div>
+
+  <script>
+    (function () {
+      function update() {
+        const now = new Date().getTime();
+        document.querySelectorAll('.countdown').forEach(el => {
+          const t = new Date(el.dataset.kickoff).getTime();
+          const diff = Math.max(0, t - now);
+          if (diff <= 0) {
+            el.outerHTML = '<em>Locked</em>';
+            return;
+          }
+          const s = Math.floor(diff / 1000);
+          const h = Math.floor(s / 3600);
+          const m = Math.floor((s % 3600) / 60);
+          const ss = s % 60;
+          el.textContent = `Locks in ${h}h ${m}m ${ss}s`;
+        });
+      }
+      update();
+      setInterval(update, 1000);
+    })();
+</script>
+{% endfor %}
+{% endblock %}
+
+    

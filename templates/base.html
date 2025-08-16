@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+    <style>
+        .logout-form { display: inline; }
+        .logout-link {
+          background: none;
+          border: 0;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          color: #0b57d0; /* same blue as other nav links */
+          cursor: pointer;
+          text-decoration: none;
+        }
+        .logout-link:hover { text-decoration: underline; }
+      </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pick'em</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style> main{max-width:960px;margin:2rem auto;} .card{padding:1rem;border:1px solid #eee;border-radius:12px;margin-bottom:1rem;} </style>
+</head>
+<body>
+  <nav class="container-fluid">
+    <ul>
+      <li><strong>Pick'em</strong></li>
+    </ul>
+    <ul>
+      <li><a href="/">This Week</a></li>
+      <li><a href="/standings/">Standings</a></li>
+      {% if request.user.is_authenticated %}
+    <li>Hi, {{ request.user.username }}</li>
+    <li>
+        <form method="post" action="{% url 'logout' %}" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="logout-link">Logout</button>
+        </form>
+      </li>
+    {% else %}
+        <li><a href="/accounts/login/">Login</a></li>
+        <li><a href="/accounts/signup/">Sign up</a></li>
+    {% endif %}
+      <li><a href="/admin/">Admin</a></li>
+    </ul>
+  </nav>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

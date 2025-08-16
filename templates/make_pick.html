@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>{{ game.away_team }} @ {{ game.home_team }} — {{ game.get_kind_display }}</h3>
+<p>Kickoff: {{ game.kickoff_at }}</p>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save pick</button>
+</form>
+{% endblock %}

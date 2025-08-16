@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Standings — {{ season.year }}</h2>
+<table>
+  <thead><tr><th>Player</th><th>W</th><th>L</th><th>Pot Owed ($)</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+      <tr><td>{{ r.username }}</td><td>{{ r.wins }}</td><td>{{ r.losses }}</td><td>{{ r.pot }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p><small>$2 per loss. Totals update when admins enter results in the admin.</small></p>
+{% endblock %}
