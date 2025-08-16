@@ -10,6 +10,13 @@ from django.db.models import Q, Sum, Case, When, IntegerField, F
 from django.db import transaction
 from .models import Profile
 
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Prefetch
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
+import csv
+
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -126,3 +133,79 @@ def signup(request):
     else:
         form = SignupForm()
     return render(request, 'signup.html', {'form': form})
+
+
+from .models import Week, Pick, Profile  # adjust import paths to match your app
+
+LOSS_FEE = Decimal("2.00")   # $2 per loss — change here if your rule differs
+
+def staff_required(user):
+    return user.is_staff or user.is_superuser
+
+@login_required
+@user_passes_test(staff_required)
+def weekly_dues(request, week_id=None):
+    """
+    Admin-only table of per-user dues for the selected week.
+    """
+    # Choose the week: explicit by URL, or default to latest
+    if week_id is None:
+        week = Week.objects.order_by("-season__year", "-number").first()
+        if not week:
+            return render(request, "admin/weekly_dues.html", {
+                "week": None, "weeks": [], "rows": [], "total": Decimal("0.00"),
+                "message": "No weeks exist yet."
+            })
+    else:
+        week = get_object_or_404(Week, pk=week_id)
+
+    # Prefetch all picks for the week with their related game+result
+    picks_qs = (Pick.objects
+                .select_related("user", "game", "game__gameresult")
+                .filter(game__week=week))
+
+    # Build per-user tally in Python (clear + robust to schema differences)
+    per_user = {}  # user_id -> {"user": u, "venmo": str, "losses": int}
+    for p in picks_qs:
+        u = p.user
+        d = per_user.setdefault(u.id, {"user": u, "venmo": getattr(getattr(u, "profile", None), "venmo_handle", ""), "losses": 0})
+        # Count a loss only if the game has a result
+        r = getattr(p.game, "gameresult", None)
+        if r:
+            if getattr(r, "winner", None) != getattr(p, "selection", None):
+                d["losses"] += 1
+
+    # Produce rows sorted by username
+    rows = []
+    total = Decimal("0.00")
+    for d in sorted(per_user.values(), key=lambda x: x["user"].username.lower()):
+        amount = LOSS_FEE * d["losses"]
+        total += amount
+        rows.append({
+            "username": d["user"].username,
+            "venmo": d["venmo"] or "—",
+            "losses": d["losses"],
+            "amount": amount,
+        })
+
+    # CSV export: /weekly-dues/<id>/?format=csv
+    if request.GET.get("format") == "csv":
+        resp = HttpResponse(content_type="text/csv")
+        resp["Content-Disposition"] = f'attachment; filename="dues_week_{week.id}.csv"'
+        w = csv.writer(resp)
+        w.writerow(["Username", "Venmo", "Losses", "Amount Owed"])
+        for r in rows:
+            w.writerow([r["username"], r["venmo"], r["losses"], f"{r['amount']:.2f}"])
+        w.writerow([])
+        w.writerow(["TOTAL", "", "", f"{total:.2f}"])
+        return resp
+
+    # Render HTML
+    weeks = Week.objects.order_by("season__year", "number").all()
+    return render(request, "admin/weekly_dues.html", {
+        "week": week,
+        "weeks": weeks,
+        "rows": rows,
+        "total": total,
+        "loss_fee": LOSS_FEE,
+    })

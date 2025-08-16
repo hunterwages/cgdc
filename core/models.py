@@ -83,6 +83,10 @@ class Pick(models.Model):
     selection = models.CharField(max_length=4, choices=SELECTION)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def is_correct(self) -> bool:
+        r = getattr(self.game, "gameresult", None)
+        return bool(r and r.winner == self.selection)
+
     class Meta:
         unique_together = ('user', 'game')
 
