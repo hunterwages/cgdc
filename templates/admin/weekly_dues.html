@@ -14,7 +14,7 @@
     <select id="week-select" name="week" onchange="if (this.value) window.location.href=this.value;">
       {% for w in weeks %}
         <option value="{% url 'weekly_dues' w.id %}" {% if w.id == week.id %}selected{% endif %}>
-          Season {{ w.season.year }} — Week {{ w.number }}
+            Season {{ w.season.year }} — Week {{ w.week_number }}
         </option>
       {% endfor %}
     </select>

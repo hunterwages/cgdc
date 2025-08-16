@@ -150,7 +150,7 @@ def weekly_dues(request, week_id=None):
     """
     # Choose the week: explicit by URL, or default to latest
     if week_id is None:
-        week = Week.objects.order_by("-season__year", "-number").first()
+        week = Week.objects.order_by("-season__year", "-week_number").first()
         if not week:
             return render(request, "admin/weekly_dues.html", {
                 "week": None, "weeks": [], "rows": [], "total": Decimal("0.00"),
@@ -201,7 +201,7 @@ def weekly_dues(request, week_id=None):
         return resp
 
     # Render HTML
-    weeks = Week.objects.order_by("season__year", "number").all()
+    weeks = Week.objects.order_by("season__year", "week_number").all()
     return render(request, "admin/weekly_dues.html", {
         "week": week,
         "weeks": weeks,
