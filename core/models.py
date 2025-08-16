@@ -9,7 +9,7 @@ from django.dispatch import receiver
 
 @receiver(post_save, sender=User)
 def ensure_profile(sender, instance, created, **kwargs):
-    # create it if missing, for both new and existing users
+    # Safe: won’t blow up if a row already exists (even an orphan)
     Profile.objects.get_or_create(user=instance)
 
 class Profile(models.Model):

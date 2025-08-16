@@ -110,6 +110,12 @@ def signup(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save()  # creates the User (signal runs here)
+
+            # after user = form.save()
+            Profile.objects.update_or_create(
+                user=user,
+                defaults={"venmo_handle": form.cleaned_data.get("venmo_handle", "").lstrip("@")}
+            )
             venmo = form.cleaned_data.get('venmo_handle', '').lstrip('@')
             # set venmo safely without creating a duplicate profile:
             Profile.objects.update_or_create(
